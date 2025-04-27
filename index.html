@@ -138,22 +138,28 @@
   }
 
   /* 印刷時用のスタイル */
+  /* 印刷時用のスタイル */
   @media print {
     body {
-        background-color: white !important; /* !importantで強制 */
+        /* 背景色は白のままにするか、画面と同じにするか選べます */
+        /* background-color: white !important; */ /* ← シンプルにするならこのまま */
+        background-color: #f0f0f0 !important; /* ← 画面と同じにするならこちら */
         display: block;
         padding: 0;
         margin: 0;
     }
-    canvas, #printInfo, #certificate button, #certificate::before /* シールも非表示 */ {
+    /* クイズ画面、印刷情報、ボタンは非表示 */
+    canvas, #printInfo, #certificate button {
       display: none !important;
       visibility: hidden !important;
     }
+    /* 合格証コンテナは表示 */
     #certificateContainer {
         display: block !important;
         visibility: visible !important;
         width: 100%;
     }
+    /* 合格証とその中身は表示 */
     #certificate, #certificate * {
       visibility: visible !important;
     }
@@ -161,31 +167,43 @@
       position: static;
       width: 90%; /* 印刷領域に合わせる */
       max-width: none;
-      border: 5px double black !important; /* 印刷用にシンプルな黒の二重線 */
-      box-shadow: none !important; /* 影はなし */
-      padding: 15mm; /* 印刷時のパディング */
+      /* ▼▼▼ 画面表示スタイルを維持するため、以下の印刷用上書きを削除またはコメントアウト ▼▼▼ */
+      /* border: 5px double black !important; */ /* ← 削除 */
+      /* box-shadow: none !important; */ /* ← 削除 */
+      padding: 15mm; /* 印刷時のパディングは維持しても良いでしょう */
       margin: 0 auto;
-      background-color: white !important; /* 背景は白 */
-      color: black !important; /* 文字色は黒 */
+      /* background-color: white !important; */ /* ← 削除 */
+      /* color: black !important; */ /* ← 削除 */
+      /* ▲▲▲ ここまで ▲▲▲ */
     }
     #certificate h2 {
-        color: black !important;
-        border-bottom-color: black !important;
-        text-shadow: none !important; /* テキスト影なし */
+        /* ▼▼▼ 画面表示スタイルを維持するため、以下の印刷用上書きを削除またはコメントアウト ▼▼▼ */
+        /* color: black !important; */ /* ← 削除 */
+        /* border-bottom-color: black !important; */ /* ← 削除 */
+        /* text-shadow: none !important; */ /* ← 削除 */
+        /* ▲▲▲ ここまで ▲▲▲ */
     }
     #certificate p {
-        color: black !important;
+        /* ▼▼▼ 画面表示スタイルを維持するため、以下の印刷用上書きを削除またはコメントアウト ▼▼▼ */
+        /* color: black !important; */ /* ← 削除 */
+        /* ▲▲▲ ここまで ▲▲▲ */
     }
     #certificate strong {
-        color: black !important; /* 強調も黒 */
+        /* ▼▼▼ 画面表示スタイルを維持するため、以下の印刷用上書きを削除またはコメントアウト ▼▼▼ */
+        /* color: black !important; */ /* ← 削除 */
+        /* ▲▲▲ ここまで ▲▲▲ */
     }
+    /* シールを表示するため非表示指定を削除 */
+    /* #certificate::before { display: none !important; } */ /* ← 削除 */
+
+    /* 入力欄のスタイルは印刷用に調整した方が見やすい場合が多い */
     #certificate input[type="text"] {
         border: none !important;
-        border-bottom: 1px solid #555 !important;
+        border-bottom: 1px solid #555 !important; /* 下線のみにする */
         border-radius: 0 !important;
         background-color: transparent !important;
         box-shadow: none !important;
-        color: black !important;
+        color: black !important; /* 入力欄の文字は黒が見やすい */
     }
   }
 </style>
