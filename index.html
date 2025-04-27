@@ -35,58 +35,93 @@
       align-items: center;
       display: none; /* 初期状態は非表示 */
   }
-  /* 合格証用のスタイル */
+
+  /* --- ▼▼▼ ここから合格証のスタイルを変更 ▼▼▼ --- */
   #certificate {
-    background-color: white;
-    border: 5px double #006400;
-    padding: 30px;
-    max-width: 500px;
+    background-color: #FFFFF0; /* アイボリー */
+    border: 8px double #DAA520; /* 金色 (Goldenrod) の二重線 */
+    padding: 40px; /* 余白を少し増やす */
+    max-width: 550px; /* 最大幅を少し広げる */
     width: 90%;
-    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    box-shadow: 0 0 15px rgba(0,0,0,0.2), inset 0 0 5px rgba(218, 165, 32, 0.3); /* 外側の影 + 内側の金色の光彩 */
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px; /* 下マージン調整 */
+    position: relative; /* ::before疑似要素の基準点用 */
+    overflow: hidden; /* ::beforeがはみ出さないように */
   }
   #certificate h2 {
-    color: #006400;
-    border-bottom: 2px solid #006400;
-    padding-bottom: 10px;
-    margin-bottom: 20px;
+    color: #004d00; /* 濃い緑色 */
+    border-bottom: 2px solid #DAA520; /* 金色の下線 */
+    padding-bottom: 15px; /* 下線との間隔 */
+    margin-bottom: 25px; /* 下マージン */
+    font-size: 1.8em; /* 少し大きく */
+    letter-spacing: 1px; /* 文字間隔 */
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.1); /* わずかなテキスト影 */
   }
   #certificate p {
-    margin: 15px 0;
-    font-size: 1.1em;
+    margin: 18px 0; /* 上下マージン調整 */
+    font-size: 1.15em; /* 少し大きく */
+    line-height: 1.6; /* 行間 */
+  }
+  #certificate strong {
+      color: #004d00; /* 濃い緑色 */
+      font-weight: bold;
   }
   #certificate input[type="text"] {
-    padding: 8px;
+    padding: 10px; /* パディング調整 */
     margin-top: 5px;
-    margin-bottom: 20px;
+    margin-bottom: 25px; /* 下マージン調整 */
     border: 1px solid #ccc;
     border-radius: 4px;
     width: 80%;
     max-width: 300px;
     font-size: 1em;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.1); /* 内側の影 */
   }
   #certificate button {
-    padding: 10px 20px;
+    padding: 12px 25px; /* パディング調整 */
     background-color: #007bff;
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-size: 1em;
-    margin-top: 10px;
-    margin-left: 5px;
-    margin-right: 5px;
+    margin-top: 15px; /* 上マージン調整 */
+    margin-left: 8px;
+    margin-right: 8px;
+    transition: background-color 0.3s ease; /* ホバー効果を滑らかに */
   }
   #certificate button:hover {
     background-color: #0056b3;
   }
+
+  /* オプション：右下にシール風の装飾を追加 */
+  #certificate::before {
+    content: "";
+    position: absolute;
+    bottom: -20px; /* 位置調整 */
+    right: -20px;  /* 位置調整 */
+    width: 80px;   /* サイズ */
+    height: 80px;  /* サイズ */
+    background: radial-gradient(circle, #FBF5B7 20%, #DAA520 80%); /* 金色のグラデーション */
+    border-radius: 50%;
+    border: 4px solid #B38728; /* 濃い金色の枠線 */
+    box-shadow: 0 0 10px rgba(0,0,0,0.2);
+    z-index: 0; /* テキストの後ろになるように */
+  }
+  /* シールの上にテキストやボタンが来るように */
+  #certificate > * {
+      position: relative;
+      z-index: 1;
+  }
+  /* --- ▲▲▲ ここまで合格証のスタイルを変更 ▲▲▲ --- */
+
   /* 印刷説明用のスタイル */
   #printInfo {
     background-color: #e9f5ff;
     border: 1px solid #b3d7ff;
     padding: 15px;
-    max-width: 500px;
+    max-width: 550px; /* 合格証と合わせる */
     width: 90%;
     border-radius: 5px;
     font-size: 0.9em;
@@ -105,43 +140,52 @@
   /* 印刷時用のスタイル */
   @media print {
     body {
-        background-color: white;
+        background-color: white !important; /* !importantで強制 */
         display: block;
         padding: 0;
         margin: 0;
     }
-    canvas, #printInfo, #certificate button {
+    canvas, #printInfo, #certificate button, #certificate::before /* シールも非表示 */ {
       display: none !important;
       visibility: hidden !important;
     }
     #certificateContainer {
         display: block !important;
         visibility: visible !important;
+        width: 100%;
     }
     #certificate, #certificate * {
       visibility: visible !important;
     }
     #certificate {
       position: static;
-      width: 100%;
+      width: 90%; /* 印刷領域に合わせる */
       max-width: none;
-      border: 5px double #006400;
-      box-shadow: none;
-      padding: 10mm; /* ★ 印刷時のパディングを少し減らす */
+      border: 5px double black !important; /* 印刷用にシンプルな黒の二重線 */
+      box-shadow: none !important; /* 影はなし */
+      padding: 15mm; /* 印刷時のパディング */
       margin: 0 auto;
-    }
-    #certificate input[type="text"] {
-        border: none;
-        border-bottom: 1px solid #555;
-        border-radius: 0;
-        background-color: transparent;
-        box-shadow: none;
-    }
-    #certificate p, #certificate h2 {
-        color: black !important;
+      background-color: white !important; /* 背景は白 */
+      color: black !important; /* 文字色は黒 */
     }
     #certificate h2 {
+        color: black !important;
         border-bottom-color: black !important;
+        text-shadow: none !important; /* テキスト影なし */
+    }
+    #certificate p {
+        color: black !important;
+    }
+    #certificate strong {
+        color: black !important; /* 強調も黒 */
+    }
+    #certificate input[type="text"] {
+        border: none !important;
+        border-bottom: 1px solid #555 !important;
+        border-radius: 0 !important;
+        background-color: transparent !important;
+        box-shadow: none !important;
+        color: black !important;
     }
   }
 </style>
@@ -196,7 +240,7 @@
       ];
 
       const numberOfQuestions = 10;
-      const passScore = 7; // ★ 合格点を2に変更
+      const passScore = 2; // ★ 合格点を2に変更
       let quizData = [];
 
       // --- ゲームの状態管理用変数 ---
