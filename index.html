@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>英検3級クイズ (完成版 - デザイン・合格点修正)</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  /* 基本的なスタイル */
+  body {
+    display: flex;
+    flex-direction: column; /* 縦並び */
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 10px;
+    box-sizing: border-box;
+    font-family: sans-serif;
+  }
+  canvas {
+    border: 1px solid #ccc;
+    background-color: white;
+    max-width: 100%;
+    display: block;
+    cursor: pointer;
+    touch-action: none;
+    margin-bottom: 20px;
+  }
+  /* 合格証コンテナのスタイル */
+  #certificateContainer {
+      width: 100%;
+      display: flex;
+      flex-direction: column; /* コンテナ内も縦並び */
+      align-items: center;
+      display: none; /* 初期状態は非表示 */
+  }
+  /* 合格証用のスタイル */
+  #certificate {
+    background-color: white;
+    border: 5px double #006400;
+    padding: 30px;
+    max-width: 500px;
+    width: 90%;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+  #certificate h2 {
+    color: #006400;
+    border-bottom: 2px solid #006400;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+  }
+  #certificate p {
+    margin: 15px 0;
+    font-size: 1.1em;
+  }
+  #certificate input[type="text"] {
+    padding: 8px;
+    margin-top: 5px;
+    margin-bottom: 20px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    width: 80%;
+    max-width: 300px;
+    font-size: 1em;
+  }
+  #certificate button {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 1em;
+    margin-top: 10px;
+    margin-left: 5px;
+    margin-right: 5px;
+  }
+  #certificate button:hover {
+    background-color: #0056b3;
+  }
+  /* 印刷説明用のスタイル */
+  #printInfo {
+    background-color: #e9f5ff;
+    border: 1px solid #b3d7ff;
+    padding: 15px;
+    max-width: 500px;
+    width: 90%;
+    border-radius: 5px;
+    font-size: 0.9em;
+    color: #333;
+    text-align: left;
+    line-height: 1.5;
+  }
+  #printInfo strong {
+      color: #0056b3;
+  }
+  #printInfo .highlight {
+      color: red;
+      font-weight: bold;
+  }
+
+  /* 印刷時用のスタイル */
+  @media print {
+    body {
+        background-color: white;
+        display: block;
+        padding: 0;
+        margin: 0;
+    }
+    canvas, #printInfo, #certificate button {
+      display: none !important;
+      visibility: hidden !important;
+    }
+    #certificateContainer {
+        display: block !important;
+        visibility: visible !important;
+    }
+    #certificate, #certificate * {
+      visibility: visible !important;
+    }
+    #certificate {
+      position: static;
+      width: 100%;
+      max-width: none;
+      border: 5px double #006400;
+      box-shadow: none;
+      padding: 10mm; /* ★ 印刷時のパディングを少し減らす */
+      margin: 0 auto;
+    }
+    #certificate input[type="text"] {
+        border: none;
+        border-bottom: 1px solid #555;
+        border-radius: 0;
+        background-color: transparent;
+        box-shadow: none;
+    }
+    #certificate p, #certificate h2 {
+        color: black !important;
+    }
+    #certificate h2 {
+        border-bottom-color: black !important;
+    }
+  }
+</style>
+</head>
+<body>
+  <canvas id="quizCanvas" width="400" height="600"></canvas>
+  <div id="certificateContainer">
+      </div>
+
+  <script>
+    // script.js の内容をここに記述
+
+    // ページの読み込みが完了したら実行
+    window.onload = function() {
+      // HTMLから要素を取得
+      const canvas = document.getElementById('quizCanvas');
+      const certificateContainer = document.getElementById('certificateContainer');
+      const ctx = canvas.getContext('2d');
+
+      // --- 問題データ (30問 - 省略) ---
+      const allQuizData = [
+        { questionA: "A: Excuse me, where is the library?", questionB: "B: _______", options: ["1. Go straight for two blocks. It's on your left.", "2. It's open from 9 a.m. to 5 p.m.", "3. I borrowed three books yesterday.", "4. Yes, I like reading books."], correct: 1, explanation: "場所を尋ねられているので、道順を答えるのが自然です。" },
+        { questionA: "A: This bag looks heavy.", questionB: "B: _______", options: ["1. It's a new bag.", "2. I bought it yesterday.", "3. Let me help you carry it.", "4. Be careful."], correct: 3, explanation: "重そうな相手に「手伝いましょうか」と申し出る表現です。" },
+        { questionA: "A: What time does the movie start?", questionB: "B: _______", options: ["1. I saw it last week.", "2. It starts at seven thirty.", "3. The ticket is 1,000 yen.", "4. It's a very interesting movie."], correct: 2, explanation: "開始時間を聞かれているので、時刻で答えます。" },
+        { questionA: "A: How about playing tennis this weekend?", questionB: "B: _______", options: ["1. I don't have a racket.", "2. Tennis is a fun sport.", "3. Yes, I went there last weekend.", "4. Sorry, I have other plans."], correct: 4, explanation: "提案に対して都合が悪く断る際の一般的な表現です。" },
+        { questionA: "A: What do you like to do in your free time?", questionB: "B: _______", options: ["1. I enjoy listening to music.", "2. I have a lot of homework.", "3. My favorite subject is English.", "4. I usually go to bed at ten."], correct: 1, explanation: "自由時間に何をするか尋ねられているので、趣味を答えます。" },
+        { questionA: "A: Are you free next Saturday?", questionB: "B: _______", options: ["1. Yes, it was fun.", "2. Yes. Do you have any plans?", "3. I went shopping.", "4. It will be sunny."], correct: 2, explanation: "予定を尋ねられ、空いていると答えた後、相手の意図を尋ねる自然な流れです。" },
+        { questionA: "A: You don't look well. What's wrong?", questionB: "B: _______", options: ["1. I'm going to the park.", "2. Thank you for asking.", "3. It's a beautiful day.", "4. I think I have a cold."], correct: 4, explanation: "体調が悪そうだと指摘され、理由を答えています。" },
+        { questionA: "A: Can I take your order?", questionB: "B: _______", options: ["1. Yes, I made a reservation.", "2. The food was delicious.", "3. I'll have a hamburger and a cola, please.", "4. Can I have the check, please?"], correct: 3, explanation: "店員に注文を聞かれているので、注文内容を伝えます。" },
+        { questionA: "A: Hello? May I speak to Ken?", questionB: "B: _______", options: ["1. Sure. Hold on a moment, please.", "2. He is my brother.", "3. Nice talking to you.", "4. He went to the park."], correct: 1, explanation: "電話で相手に取り次ぎを頼まれた際の定型表現です。" },
+        { questionA: "A: Whose notebook is this?", questionB: "B: _______", options: ["1. It's on the desk.", "2. Oh, it's mine. Thank you.", "3. I bought it yesterday.", "4. Please write your name here."], correct: 2, explanation: "誰の持ち物か尋ねられ、自分のものだと答えています。" },
+        { questionA: "A: How was your weekend?", questionB: "B: _______", options: ["1. It was great! I went hiking.", "2. It will be sunny tomorrow.", "3. I have a test next week.", "4. My weekend is busy."], correct: 1, explanation: "週末がどうだったか聞かれているので、感想と出来事を答えます。" },
+        { questionA: "A: What kind of music do you like?", questionB: "B: _______", options: ["1. I often go to concerts.", "2. I like pop music.", "3. Music is relaxing.", "4. I can play the piano."], correct: 2, explanation: "好きな音楽の種類を尋ねられているので、具体的なジャンルを答えます。" },
+        { questionA: "A: It's hot today, isn't it?", questionB: "B: _______", options: ["1. Yes, it is. Let's get some ice cream.", "2. No, it was cold yesterday.", "3. I like hot weather.", "4. Please close the window."], correct: 1, explanation: "同意を求める付加疑問文に対し、同意して提案する自然な返答です。" },
+        { questionA: "A: Could you tell me the way to the station?", questionB: "B: _______", options: ["1. The train is coming soon.", "2. Turn right at the next corner.", "3. I often use the station.", "4. It takes about 10 minutes."], correct: 2, explanation: "道順を尋ねられているので、具体的な指示で答えます。" },
+        { questionA: "A: What would you like for breakfast?", questionB: "B: _______", options: ["1. I had toast yesterday.", "2. Breakfast is important.", "3. I usually have cereal and milk.", "4. I'm hungry now."], correct: 3, explanation: "朝食に何が欲しいか聞かれているので、普段食べるものを答えています。" },
+        { questionA: "A: I'm going to the supermarket. Do you need anything?", questionB: "B: _______", options: ["1. The supermarket is near here.", "2. Yes, can you get some milk?", "3. I went there yesterday.", "4. Thank you for asking."], correct: 2, explanation: "何か必要か聞かれ、具体的な買い物をお願いしています。" },
+        { questionA: "A: Happy birthday, Lisa!", questionB: "B: _______", options: ["1. Thank you very much!", "2. When is your birthday?", "3. I like birthday cake.", "4. It's a surprise party."], correct: 1, explanation: "誕生日のお祝いに対する最も一般的な返答です。" },
+        { questionA: "A: How many people are there in your family?", questionB: "B: _______", options: ["1. My family lives in Osaka.", "2. There are four people: my parents, my sister, and me.", "3. I love my family.", "4. We have a dog."], correct: 2, explanation: "家族の人数を尋ねられているので、具体的な人数と構成を答えます。" },
+        { questionA: "A: What's your favorite season?", questionB: "B: _______", options: ["1. I like spring because of the cherry blossoms.", "2. It often rains in June.", "3. Winter is cold.", "4. There are four seasons in Japan."], correct: 1, explanation: "好きな季節を聞かれ、理由とともに答えています。" },
+        { questionA: "A: Can you swim?", questionB: "B: _______", options: ["1. Swimming is good exercise.", "2. I often go to the pool.", "3. Yes, I can swim well.", "4. The water is cold."], correct: 3, explanation: "能力を尋ねる Can you...? に対し、できるかどうかで答えます。" },
+        { questionA: "A: What did you do last night?", questionB: "B: _______", options: ["1. I will watch TV tonight.", "2. Last night was fun.", "3. I studied for the English test.", "4. I usually go to bed early."], correct: 3, explanation: "昨夜何をしたかという過去の行動について尋ねられています。" },
+        { questionA: "A: May I borrow your pen?", questionB: "B: _______", options: ["1. This pen is blue.", "2. Sure, here you are.", "3. I bought it yesterday.", "4. Where is your pen?"], correct: 2, explanation: "物を貸してほしいという依頼に対する許可の返答です。" },
+        { questionA: "A: Let's go shopping tomorrow.", questionB: "B: _______", options: ["1. I like shopping.", "2. That sounds good!", "3. Where did you go?", "4. I need new shoes."], correct: 2, explanation: "提案に対する同意の表現です。" },
+        { questionA: "A: What subject do you like the best?", questionB: "B: _______", options: ["1. I like math because it's interesting.", "2. School starts at 8:30.", "3. My teacher is kind.", "4. I have many subjects."], correct: 1, explanation: "一番好きな科目を尋ねられ、理由とともに答えています。" },
+        { questionA: "A: How do you come to school?", questionB: "B: _______", options: ["1. School is far from here.", "2. I come by bus.", "3. My friend comes by bike.", "4. It takes 20 minutes."], correct: 2, explanation: "通学方法を尋ねられているので、交通手段で答えます。" },
+        { questionA: "A: It's raining outside.", questionB: "B: _______", options: ["1. I like rain.", "2. Really? You should take an umbrella.", "3. It was sunny yesterday.", "4. Let's play outside."], correct: 2, explanation: "雨が降っている状況に対し、傘を持っていくようアドバイスしています。" },
+        { questionA: "A: What are you going to do this afternoon?", questionB: "B: _______", options: ["1. I went to the library this morning.", "2. I'm going to play soccer with my friends.", "3. This afternoon is sunny.", "4. I have no plans."], correct: 2, explanation: "午後の予定を尋ねられ、具体的な行動を答えています。" },
+        { questionA: "A: Excuse me, is this seat taken?", questionB: "B: _______", options: ["1. Yes, I took this train.", "2. No, it's free. Please sit down.", "3. This is my seat.", "4. Where are you going?"], correct: 2, explanation: "席が空いているか尋ねられ、空いていると答えて座るよう促しています。" },
+        { questionA: "A: I lost my wallet.", questionB: "B: _______", options: ["1. That's too bad. Where did you lose it?", "2. I found your wallet.", "3. My wallet is new.", "4. Let's buy a new wallet."], correct: 1, explanation: "困っている相手に同情し、詳細を尋ねる自然な反応です。" },
+        { questionA: "A: Would you like some more juice?", questionB: "B: _______", options: ["1. Juice is sweet.", "2. I like orange juice.", "3. Yes, please. I'm still thirsty.", "4. No, thank you. I'm full."], correct: 4, explanation: "飲み物のおかわりを勧められ、丁寧に断る表現です。（Yes, please. も正解になりえますが、ここではNo, thank you. を正解としています）" }
+      ];
+
+      const numberOfQuestions = 10;
+      const passScore = 2; // ★ 合格点を2に変更
+      let quizData = [];
+
+      // --- ゲームの状態管理用変数 ---
+      let currentQuestionIndex = 0;
+      let userAnswers = [];
+      let buttonRects = [];
+      let score = 0;
+      let quizFinished = false;
+      let retryCount = 1;
+      let retryButtonRect = null;
+      // --- 時間計測用変数 ---
+      let startTime = null;
+      let endTime = null;
+      let elapsedTime = 0;
+      // --- スクロール関連の変数 ---
+      let scrollTop = 0;
+      let totalResultHeight = 0;
+      let maxScrollTop = 0;
+      let isDragging = false;
+      let startY = 0;
+      let startScrollTop = 0;
+
+      // --- 描画設定 ---
+      const canvasWidth = canvas.width;
+      const canvasHeight = canvas.height;
+      const buttonWidthRatio = 0.85;
+      const buttonHeight = 45;
+      const buttonMargin = 12;
+      const textPadding = 15;
+      const questionFontSize = 16;
+      const optionFontSize = 13;
+      const resultFontSize = 11;
+      // ★ ボタンの色を単色（青系）に変更
+      const buttonColor = '#A0C4FF'; // 単色
+      const resultLineHeight = resultFontSize * 1.4;
+      const retryButtonColor = '#FF9900';
+
+      // --- Fisher-Yates (Knuth) Shuffle ---
+      function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [array[i], array[j]] = [array[j], array[i]];
+        }
+      }
+
+      // --- ゲーム初期化関数 ---
+      function initGame() {
+          shuffleArray(allQuizData);
+          quizData = allQuizData.slice(0, numberOfQuestions);
+          currentQuestionIndex = 0;
+          userAnswers = [];
+          buttonRects = [];
+          score = 0;
+          quizFinished = false;
+          startTime = null;
+          endTime = null;
+          elapsedTime = 0;
+          scrollTop = 0;
+          totalResultHeight = 0;
+          maxScrollTop = 0;
+          isDragging = false;
+          retryButtonRect = null;
+
+          // 表示切り替え: Canvasを表示し、合格証コンテナを隠す
+          canvas.style.display = 'block';
+          certificateContainer.innerHTML = '';
+          certificateContainer.style.display = 'none';
+
+          // イベントリスナーを初期状態に
+          canvas.removeEventListener('wheel', handleScroll);
+          canvas.removeEventListener('touchstart', handleTouchStart);
+          canvas.removeEventListener('touchmove', handleTouchMove);
+          canvas.removeEventListener('touchend', handleTouchEnd);
+          canvas.removeEventListener('click', handleResultClick);
+          canvas.addEventListener('click', handleClick);
+          canvas.style.cursor = 'pointer';
+
+          drawQuiz();
+      }
+
+      // --- 描画処理関数 (ボタン色変更) ---
+      function drawQuiz() {
+        buttonRects = [];
+        ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+        const currentQuestion = quizData[currentQuestionIndex];
+        if (!currentQuestion) return;
+        const questionText = `${currentQuestion.questionA}\n${currentQuestion.questionB}`;
+        const options = currentQuestion.options;
+        ctx.fillStyle = '#555';
+        ctx.font = `bold ${questionFontSize - 2}px Arial`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'top';
+        ctx.fillText(`Q${currentQuestionIndex + 1}/${numberOfQuestions}. (Attempt: ${retryCount})`, 20, 25);
+        ctx.fillStyle = '#333';
+        ctx.font = `bold ${questionFontSize}px Arial`;
+        ctx.textAlign = 'center';
+        let currentY = 60;
+        const questionLines = questionText.split('\n');
+        questionLines.forEach(line => {
+            currentY = wrapText(line, canvasWidth / 2, currentY, canvasWidth * 0.9, questionFontSize * 1.4).nextY;
+        });
+        currentY += 25;
+        ctx.font = `${optionFontSize}px Arial`;
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'middle';
+        const buttonWidth = canvasWidth * buttonWidthRatio;
+        const startX = (canvasWidth - buttonWidth) / 2;
+        for (let i = 0; i < options.length; i++) {
+          if (!options[i]) continue;
+          const buttonY = currentY + i * (buttonHeight + buttonMargin);
+          if (buttonY + buttonHeight > canvasHeight) break;
+
+          // a. ボタン背景 (角丸) - ★ 単色を使用
+          ctx.fillStyle = buttonColor; // ★ 単色に変更
+          ctx.beginPath();
+          ctx.moveTo(startX + 10, buttonY);
+          ctx.lineTo(startX + buttonWidth - 10, buttonY);
+          ctx.quadraticCurveTo(startX + buttonWidth, buttonY, startX + buttonWidth, buttonY + 10);
+          ctx.lineTo(startX + buttonWidth, buttonY + buttonHeight - 10);
+          ctx.quadraticCurveTo(startX + buttonWidth, buttonY + buttonHeight, startX + buttonWidth - 10, buttonY + buttonHeight);
+          ctx.lineTo(startX + 10, buttonY + buttonHeight);
+          ctx.quadraticCurveTo(startX, buttonY + buttonHeight, startX, buttonY + buttonHeight - 10);
+          ctx.lineTo(startX, buttonY + 10);
+          ctx.quadraticCurveTo(startX, buttonY, startX + 10, buttonY);
+          ctx.closePath();
+          ctx.fill();
+
+          // b. 選択肢テキスト (折り返し)
+          ctx.fillStyle = '#000000';
+          wrapText(options[i], startX + textPadding, buttonY + buttonHeight / 2, buttonWidth - textPadding * 2, optionFontSize * 1.2, true);
+
+          // c. ボタン情報記録
+          buttonRects.push({ x: startX, y: buttonY, width: buttonWidth, height: buttonHeight, optionIndex: i + 1 });
+        }
+      }
+
+       // --- 結果処理関数 (合格点チェック変更) ---
+       function handleResults() {
+            if (quizFinished) return;
+            quizFinished = true;
+            endTime = new Date();
+            canvas.removeEventListener('click', handleClick);
+            score = 0;
+            for(let i = 0; i < quizData.length; i++) {
+                if (userAnswers[i] === quizData[i].correct) score++;
+            }
+            if (startTime) { elapsedTime = Math.round((endTime - startTime) / 1000); }
+            else { elapsedTime = 0; }
+            const isPassed = score >= passScore; // ★ 合格判定 (passScore=2)
+            console.log(`Attempt ${retryCount} Finished. Score: ${score}/${quizData.length} (${elapsedTime}s). ${isPassed ? 'Passed!' : 'Failed...'}`);
+            if (isPassed) {
+                displayCertificate();
+            } else {
+                canvas.style.cursor = 'default';
+                canvas.addEventListener('wheel', handleScroll);
+                canvas.addEventListener('touchstart', handleTouchStart);
+                canvas.addEventListener('touchmove', handleTouchMove);
+                canvas.addEventListener('touchend', handleTouchEnd);
+                canvas.addEventListener('click', handleResultClick);
+                drawFailedResults();
+            }
+       }
+
+       // --- 合格証HTML生成・表示関数 (変更なし) ---
+       function displayCertificate() {
+           canvas.style.display = 'none';
+           certificateContainer.style.display = 'flex';
+
+           const formattedDate = endTime.toLocaleDateString('ja-JP', { year: 'numeric', month: 'long', day: 'numeric' });
+           const formattedTime = endTime.toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' });
+
+           const certificateHTML = `
+               <div id="certificate">
+                   <h2>合格証</h2>
+                   <p>氏名:</p>
+                   <input type="text" id="userName" placeholder="お名前を入力してください">
+                   <p>あなたは英検3級レベル会話クイズにおいて、</p>
+                   <p><strong>${numberOfQuestions}問中 ${score}問正解</strong> の成績を収められました。</p>
+                   <p>（所要時間: ${elapsedTime}秒）</p>
+                   <p>これを証します。</p>
+                   <p><strong>解答日時: ${formattedDate} ${formattedTime}</strong></p>
+                   <button onclick="window.print()">印刷する</button> <button id="restartButton">もう一度挑戦する</button>
+               </div>
+           `;
+
+           const printInfoHTML = `
+               <div id="printInfo">
+                   <strong>印刷と保存について:</strong><br>
+                   上の「印刷する」ボタンを押すと、通常は印刷ダイアログが表示されます。<br>
+                   <span class="highlight">もしボタンを押してもダイアログが表示されない場合</span>は、お手数ですが以下の方法をお試しください：<br>
+                   - <strong>ブラウザのメニュー</strong>から「印刷」を選択する (例: Chromeなら右上の︙メニュー > 印刷)。<br>
+                   - このページ上で<strong>右クリック</strong>し、「印刷」を選択する。<br>
+                   <br>
+                   印刷ダイアログでは、プリンターを選んで紙に印刷したり、「PDFとして保存」などを選んでファイルとして保存できます。保存場所は通常、ダイアログで指定できます（指定しない場合はダウンロードフォルダなど）。
+               </div>
+           `;
+
+           certificateContainer.innerHTML = certificateHTML + printInfoHTML;
+
+           const restartButton = document.getElementById('restartButton');
+           if (restartButton) {
+               restartButton.addEventListener('click', function() {
+                   console.log("Restart button clicked via listener.");
+                   restartGame();
+               });
+           } else {
+                console.error("Restart button not found after insertion.");
+           }
+       }
+
+       // --- 不合格結果描画関数 (変更なし) ---
+       function drawFailedResults() {
+            ctx.clearRect(0, 0, canvasWidth, canvasHeight);
+            ctx.save();
+            ctx.translate(0, -scrollTop);
+            totalResultHeight = 0;
+            ctx.fillStyle = '#333';
+            ctx.font = `bold ${questionFontSize + 6}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            let currentY = 40;
+            ctx.fillText("Result", canvasWidth / 2, currentY);
+            currentY += 35;
+            ctx.font = `bold ${questionFontSize + 4}px Arial`;
+            ctx.fillStyle = 'red';
+            ctx.fillText('不合格...', canvasWidth / 2, currentY);
+            currentY += 35;
+            ctx.fillStyle = '#333';
+            ctx.font = `bold ${questionFontSize + 2}px Arial`;
+            ctx.fillText(`Score: ${score} / ${numberOfQuestions} (${elapsedTime} seconds)`, canvasWidth / 2, currentY);
+            currentY += 35;
+            ctx.font = `${resultFontSize + 1}px Arial`;
+            ctx.fillStyle = '#666';
+            ctx.fillText(`チャレンジ回数: ${retryCount}`, canvasWidth / 2, currentY);
+            currentY += 30;
+            ctx.font = `${resultFontSize}px Arial`;
+            ctx.textAlign = 'left';
+            ctx.textBaseline = 'top';
+            const resultStartX = 25;
+            const resultWidth = canvasWidth - resultStartX * 2 - 10;
+            for(let i = 0; i < quizData.length; i++) {
+                 const question = quizData[i];
+                const userAnswerIndex = userAnswers[i] - 1;
+                const userAnswerText = (userAnswerIndex >= 0 && userAnswerIndex < question.options.length) ? question.options[userAnswerIndex] : "未回答";
+                const correctAnswerText = question.options[question.correct - 1];
+                const isCorrect = userAnswers[i] === question.correct;
+                let tempY = currentY;
+                ctx.fillStyle = isCorrect ? 'green' : 'red';
+                ctx.font = `bold ${resultFontSize}px Arial`;
+                tempY = wrapText(`Q${i + 1}. ${isCorrect ? 'Correct!' : 'Incorrect'}`, resultStartX, tempY, resultWidth, resultLineHeight).nextY;
+                ctx.font = `${resultFontSize}px Arial`;
+                ctx.fillStyle = '#555';
+                tempY = wrapText(`Q: ${question.questionA} ${question.questionB}`, resultStartX, tempY, resultWidth, resultLineHeight).nextY;
+                ctx.fillStyle = '#000';
+                tempY = wrapText(`Your Answer: ${userAnswerText}`, resultStartX, tempY, resultWidth, resultLineHeight).nextY;
+                if (!isCorrect) {
+                    ctx.fillStyle = 'green';
+                    tempY = wrapText(`Correct Answer: ${correctAnswerText}`, resultStartX, tempY, resultWidth, resultLineHeight).nextY;
+                }
+                ctx.fillStyle = '#888';
+                tempY = wrapText(`Explanation: ${question.explanation}`, resultStartX, tempY, resultWidth, resultLineHeight).nextY;
+                currentY = tempY + resultLineHeight * 0.8;
+            }
+            retryButtonRect = null;
+            const rButtonWidth = 150;
+            const rButtonHeight = 40;
+            const rButtonX = (canvasWidth - rButtonWidth) / 2;
+            const rButtonY = currentY + 20;
+            currentY = rButtonY + rButtonHeight + 20;
+            ctx.fillStyle = retryButtonColor;
+            ctx.beginPath();
+            ctx.moveTo(rButtonX + 10, rButtonY);
+            ctx.lineTo(rButtonX + rButtonWidth - 10, rButtonY);
+            ctx.quadraticCurveTo(rButtonX + rButtonWidth, rButtonY, rButtonX + rButtonWidth, rButtonY + 10);
+            ctx.lineTo(rButtonX + rButtonWidth, rButtonY + rButtonHeight - 10);
+            ctx.quadraticCurveTo(rButtonX + rButtonWidth, rButtonY + rButtonHeight, rButtonX + rButtonWidth - 10, rButtonY + rButtonHeight);
+            ctx.lineTo(rButtonX + 10, rButtonY + rButtonHeight);
+            ctx.quadraticCurveTo(rButtonX, rButtonY + rButtonHeight, rButtonX, rButtonY + rButtonHeight - 10);
+            ctx.lineTo(rButtonX, rButtonY + 10);
+            ctx.quadraticCurveTo(rButtonX, rButtonY, rButtonX + 10, rButtonY);
+            ctx.closePath();
+            ctx.fill();
+            ctx.fillStyle = 'white';
+            ctx.font = `bold ${optionFontSize + 1}px Arial`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText("再チャレンジ", rButtonX + rButtonWidth / 2, rButtonY + rButtonHeight / 2);
+            retryButtonRect = { x: rButtonX, y: rButtonY, width: rButtonWidth, height: rButtonHeight };
+            totalResultHeight = currentY;
+            maxScrollTop = Math.max(0, totalResultHeight - canvasHeight);
+            ctx.restore();
+            if (maxScrollTop > 0) {
+                const scrollbarWidth = 8;
+                const scrollbarX = canvasWidth - scrollbarWidth - 2;
+                const scrollbarHeight = canvasHeight * (canvasHeight / totalResultHeight);
+                const scrollbarY = (scrollTop / maxScrollTop) * (canvasHeight - scrollbarHeight);
+                ctx.fillStyle = '#ccc';
+                ctx.fillRect(scrollbarX, 0, scrollbarWidth, canvasHeight);
+                ctx.fillStyle = '#888';
+                ctx.fillRect(scrollbarX, scrollbarY, scrollbarWidth, scrollbarHeight);
+            }
+       }
+
+      // --- クリック（タップ）イベント処理関数 (クイズ中) (変更なし) ---
+      function handleClick(event) {
+        if (quizFinished) return;
+        const rect = canvas.getBoundingClientRect();
+        const x = event.clientX - rect.left;
+        const y = event.clientY - rect.top;
+        let buttonClicked = false;
+        for (const button of buttonRects) {
+          if (x >= button.x && x <= button.x + button.width && y >= button.y && y <= button.y + button.height) {
+            if (startTime === null) { startTime = new Date(); console.log("Timer started at:", startTime); }
+            userAnswers.push(button.optionIndex);
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) { drawQuiz(); }
+            else { handleResults(); }
+            buttonClicked = true;
+            break;
+          }
+        }
+      }
+
+      // --- 結果画面用クリック（タップ）イベント処理関数 (再チャレンジボタン用) (変更なし) ---
+      function handleResultClick(event) {
+          if (!quizFinished || !retryButtonRect) return;
+          const rect = canvas.getBoundingClientRect();
+          const x = event.clientX - rect.left;
+          const y = event.clientY - rect.top;
+          const adjustedY = y + scrollTop;
+          if (x >= retryButtonRect.x && x <= retryButtonRect.x + retryButtonRect.width && adjustedY >= retryButtonRect.y && adjustedY <= retryButtonRect.y + retryButtonRect.height) {
+              console.log("再チャレンジボタンがクリックされました。");
+              retryCount++;
+              initGame();
+          }
+      }
+
+      // --- ホイールイベント処理関数 (不合格時のみ) (変更なし) ---
+      function handleScroll(event) {
+          event.preventDefault();
+          if (!quizFinished || score >= passScore) return;
+          const delta = event.deltaY > 0 ? 40 : -40;
+          scrollTop += delta;
+          scrollTop = Math.max(0, Math.min(scrollTop, maxScrollTop));
+          drawFailedResults();
+      }
+
+      // --- タッチイベント処理関数 (不合格時のみ) (変更なし) ---
+      function handleTouchStart(event) {
+          event.preventDefault();
+          if (!quizFinished || score >= passScore || event.touches.length !== 1) return;
+          isDragging = true;
+          startY = event.touches[0].clientY;
+          startScrollTop = scrollTop;
+          canvas.style.cursor = 'grabbing';
+      }
+      function handleTouchMove(event) {
+          event.preventDefault();
+          if (!isDragging || !quizFinished || score >= passScore || event.touches.length !== 1) return;
+          const currentY = event.touches[0].clientY;
+          const deltaY = currentY - startY;
+          scrollTop = startScrollTop - deltaY;
+          scrollTop = Math.max(0, Math.min(scrollTop, maxScrollTop));
+          drawFailedResults();
+      }
+      function handleTouchEnd(event) {
+          event.preventDefault();
+          if (isDragging) {
+              isDragging = false;
+              canvas.style.cursor = 'pointer';
+          }
+      }
+
+      // --- テキスト折り返し描画関数 (変更なし) ---
+      function wrapText(text, x, y, maxWidth, lineHeight, centerVertically = false) {
+          const words = text.toString().split(' ');
+          let line = '';
+          let lines = [];
+          let currentY = y;
+          for (let n = 0; n < words.length; n++) {
+              let testLine = line + words[n] + ' ';
+              let metrics = ctx.measureText(testLine);
+              let testWidth = metrics.width;
+              if (testWidth > maxWidth && n > 0) { lines.push(line); line = words[n] + ' '; }
+              else { line = testLine; }
+          }
+          lines.push(line);
+          let startY = currentY;
+          let totalHeight = lines.length * lineHeight;
+          if (centerVertically) { startY = currentY - (lines.length - 1) * lineHeight / 2; }
+          const originalBaseline = ctx.textBaseline;
+          if(centerVertically) ctx.textBaseline = 'middle';
+          for (let k = 0; k < lines.length; k++) {
+              let drawY = startY + k * lineHeight;
+              if (ctx.textAlign === 'center') { ctx.fillText(lines[k].trim(), x, drawY); }
+              else { ctx.fillText(lines[k].trim(), x, drawY); }
+          }
+          ctx.textBaseline = originalBaseline;
+          return { nextY: startY + totalHeight, height: totalHeight };
+      }
+
+      // --- ローカル関数として定義 ---
+      function restartGame() {
+          console.log("Restarting game.");
+          retryCount = 1;
+          initGame();
+      }
+
+      // --- 初期化処理 ---
+      initGame();
+
+    };
+  </script>
+</body>
+</html>
